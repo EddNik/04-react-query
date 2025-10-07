@@ -19,9 +19,9 @@ function App() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [page, setPage] = useState<number>(1);
 
-  const { data, error, isLoading, isError } = useQuery({
-    queryKey: [query, page],
-    queryFn: () => fetchMovies(query, page),
+  const { data, error, isLoading, isError, isSuccess } = useQuery({
+    queryKey: ["movies", query, page],
+    queryFn: query !== "" ? () => fetchMovies(query, page) : undefined,
     enabled: query !== "",
     placeholderData: keepPreviousData,
   });
@@ -34,10 +34,10 @@ function App() {
   }
 
   useEffect(() => {
-    if (data && data.results.length === 0) {
+    if (isSuccess && data.results.length === 0) {
       toast.error("No movies found for your request");
     }
-  }, [data]);
+  }, [data, isSuccess]);
 
   function handleSelectMovie(movie: Movie | null) {
     setSelectedMovie(movie);
@@ -47,7 +47,7 @@ function App() {
   return (
     <>
       <SearchBar onSubmit={handleQuery} />
-      {data && totalPages > 1 && (
+      {isSuccess && totalPages > 1 && (
         <ReactPaginate
           pageCount={totalPages}
           pageRangeDisplayed={5}
@@ -63,8 +63,8 @@ function App() {
 
       {isLoading && <Loader />}
       {isError && <ErrorMessage error={error?.message} />}
-      {data && (
-        <MovieGrid movies={data?.results || []} onSelect={handleSelectMovie} />
+      {isSuccess && data.results.length > 0 && (
+        <MovieGrid movies={data?.results} onSelect={handleSelectMovie} />
       )}
 
       {isModalOpen && (
